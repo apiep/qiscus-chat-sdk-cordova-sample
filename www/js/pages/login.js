@@ -4,21 +4,58 @@ define([
   'service/content',
   'service/qiscus',
   'service/html',
-], function ($, route, $content, qiscus, html) {
+  'service/emitter',
+], function ($, route, $content, qiscus, html, emitter) {
+  function initiateChat(nonce, name, user_id) {
+    const headers = new Headers();
+    headers.set('content-type', 'application/json');
+
+    return fetch(
+      'https://multichannel.qiscus.com/api/v2/qiscus/initiate_chat',
+      {
+        method: 'post',
+        body: JSON.stringify({
+          nonce,
+          app_id: qiscus.AppId,
+          user_id,
+          name,
+        }),
+        headers: headers,
+      }
+    )
+      .then((r) => r.json())
+      .then((r) => r.data);
+  }
   function LoginPage(state) {
     // For some reason, jquery.on('submit') are very slow
     // and did not want to call qiscus.setUser
     document.addEventListener('submit', function (event) {
       if (event.target.id === 'LoginForm') {
         event.preventDefault();
-        var userId = $('#user-id').val();
-        var username = $('#username').val();
-        var userKey = $('#user-key').val();
+        var name = $('#name').val();
+        var user_id = $('#email').val();
         qiscus
           .getNonce()
-          .then((nonce) => console.log('Sukses get nonce', nonce))
-          .catch((error) => console.log('failed getting nonce', error));
-        qiscus.setUser(userId, userKey, username);
+          .then(({ nonce }) => initiateChat(nonce, name, user_id))
+          .then(async (resp) => {
+            const user = await qiscus
+              .verifyIdentityToken(resp.identity_token)
+              .then((r) => r.user);
+            const room = resp.customer_room;
+            return { room, user };
+          })
+          .then(({ user, room }) => {
+            qiscus.setUserWithIdentityToken({ user });
+            emitter.on('qiscus::login-success', () => {
+              qiscus.getRoomById(room.room_id).then(function (data) {
+                route.push('/chat-room', {
+                  roomId: room.room_id,
+                  roomName: room.name,
+                  roomAvatar: room.user_avatar_url,
+                });
+              });
+            });
+          });
       }
     });
     return html`
@@ -26,32 +63,22 @@ define([
         <img src="/img/logo.svg" class="logo" alt="qiscus-logo" />
         <form id="LoginForm">
           <div class="form-group">
-            <label for="userId">User ID</label>
+            <label for="name">Name</label>
             <input
-              id="user-id"
+              id="name"
               type="text"
-              name="user-id"
-              value="guest-101"
+              name="name"
               autocomplete="off"
+              value="guest-101"
             />
           </div>
           <div class="form-group">
-            <label for="username">Username</label>
+            <label for="email">Email</label>
             <input
-              id="username"
-              type="text"
-              name="username"
-              value="guest-101"
-              autocomplete="off"
-            />
-          </div>
-          <div class="form-group">
-            <label for="user-key">User Key</label>
-            <input
-              id="user-key"
-              type="password"
-              name="user-key"
-              value="passkey"
+              id="email"
+              type="email"
+              name="email"
+              value="guest-101@mailinator.com"
             />
           </div>
           <div class="form-group">

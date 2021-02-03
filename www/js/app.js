@@ -25,8 +25,8 @@ define([
   Profile,
   RoomInfoPage
 ) {
-  window.route = route
-  window.qiscus = qiscus
+  window.route = route;
+  window.qiscus = qiscus;
   var routes = [
     LoginPage,
     ChatListPage,
@@ -34,36 +34,36 @@ define([
     UserPage,
     CreateGroupPage,
     Profile,
-    RoomInfoPage
-  ]
+    RoomInfoPage,
+  ];
 
-  $content.html(LoginPage)
+  $content.html(LoginPage);
   if (!qiscus.isLogin) {
-    route.replace('/login')
+    route.replace('/login');
   }
 
   emitter.on('qiscus::login-success', function () {
-    route.replace('/chat')
-    localStorage.setItem('authdata', JSON.stringify(qiscus.userData))
-  })
+    // route.replace('/chat');
+    // localStorage.setItem('authdata', JSON.stringify(qiscus.userData))
+  });
   emitter.on('route::change', function (location) {
     var content = routes.find(function (page) {
-      return page.path === location.pathname
-    })
-    $content.html(content(location.state))
-  })
+      return page.path === location.pathname;
+    });
+    $content.html(content(location.state));
+  });
 
   $('.widget-container').on('click', 'button.close-btn', function (event) {
-    event.preventDefault()
-    $('.widget-container').slideUp()
-  })
+    event.preventDefault();
+    $('.widget-container').slideUp();
+  });
   $('.toggle-widget-btn').on('click', function (event) {
-    event.preventDefault()
-    $('.widget-container').slideDown()
-  })
+    event.preventDefault();
+    $('.widget-container').slideDown();
+  });
 
   if (localStorage['authdata'] != null) {
-    var authdata = JSON.parse(localStorage['authdata'])
-    qiscus.setUserWithIdentityToken({ user: authdata })
+    var authdata = JSON.parse(localStorage['authdata']);
+    qiscus.setUserWithIdentityToken({ user: authdata });
   }
-})
+});

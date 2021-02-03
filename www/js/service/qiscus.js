@@ -5,7 +5,8 @@ define(['service/emitter'], function (emitter) {
   var Qiscus = QiscusSDKCore;
   var qiscus = new QiscusSDKCore();
 
-  var appId = 'sdksample';
+  // var appId = 'sdksample';
+  var appId = 'cui-3jdpu8fe4zmmbuo02';
   // var appId = 'dragongo'
   // var appId = 'apptest-parvvzx2tq0si'
 
@@ -76,23 +77,23 @@ define(['service/emitter'], function (emitter) {
   qiscus.intercept(Qiscus.Interceptor.MESSAGE_BEFORE_SENT, function (message) {
     return message;
   });
-  qiscus.intercept(Qiscus.Interceptor.MESSAGE_BEFORE_RECEIVED, async function (
-    message
-  ) {
-    const content = message.message.replace(/(qis)(cus)/im, function (
-      _,
-      $1,
-      $2
-    ) {
-      return `**${$1.toLowerCase()}**${$2.toLowerCase()}`;
-    });
+  qiscus.intercept(
+    Qiscus.Interceptor.MESSAGE_BEFORE_RECEIVED,
+    async function (message) {
+      const content = message.message.replace(
+        /(qis)(cus)/im,
+        function (_, $1, $2) {
+          return `**${$1.toLowerCase()}**${$2.toLowerCase()}`;
+        }
+      );
 
-    Object.assign(message, {
-      message: conv.makeHtml(content),
-      extras: Object.assign(message.extras || {}, { before_received: true }),
-    });
-    return message;
-  });
+      Object.assign(message, {
+        message: conv.makeHtml(content),
+        extras: Object.assign(message.extras || {}, { before_received: true }),
+      });
+      return message;
+    }
+  );
 
   return qiscus;
 });
